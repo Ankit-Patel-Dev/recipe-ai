@@ -1,0 +1,12 @@
+{
+  "expo": {
+    "extra": {
+      "eas": {
+        "projectId": "673c3853-c59c-4b31-bc22-686043d60f0a"
+      }
+    },
+    "android": {
+      "package": "com.patelankit34353637.recipeai"
+    }
+  }
+}
