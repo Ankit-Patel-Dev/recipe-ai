@@ -1,15 +1,17 @@
 // app/preferences.js
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import FilterPill from '../components/FilterPill';
 import { theme } from '../utils/theme';
+import { DEFAULT_PREFERENCES, getRecipePreferences, saveRecipePreferences } from '../utils/preferencesStorage';
 
 // The data for all our filter sections
 const FILTER_DATA = {
   time: ['Under 15 min', 'Under 30 min', 'Under 60 min'],
-  diets: ['Vegan', 'Vegetarian', 'Pescatarian', 'Keto', 'Paleo', 'Low-Carb'],
+  diets: ['Pescatarian', 'Keto', 'Paleo', 'Low-Carb'],
   allergies: ['Gluten', 'Dairy', 'Egg', 'Soy', 'Fish', 'Peanut', 'Tree Nut', 'Shellfish'],
   goals: ['Eat Healthy', 'Budget-Friendly', 'Plan Better', 'Learn to Cook', 'Quick & Easy'],
   dishTypes: ['Breakfast', 'Brunch', 'Lunch', 'Appetizers', 'Snack', 'Dessert', 'Dinner', 'Drinks']
@@ -18,12 +20,24 @@ const FILTER_DATA = {
 export default function PreferencesModal() {
   const router = useRouter();
 
-  // State to hold selected items (pre-filled to look good for the demo)
-  const [selectedTime, setSelectedTime] = useState(['Under 15 min']);
-  const [selectedDiets, setSelectedDiets] = useState(['Vegetarian']);
-  const [selectedAllergies, setSelectedAllergies] = useState([]);
-  const [selectedGoals, setSelectedGoals] = useState(['Budget-Friendly']);
-  const [selectedDishes, setSelectedDishes] = useState(['Brunch']);
+  const [selectedTime, setSelectedTime] = useState(DEFAULT_PREFERENCES.time);
+  const [selectedDiets, setSelectedDiets] = useState(DEFAULT_PREFERENCES.diets);
+  const [selectedAllergies, setSelectedAllergies] = useState(DEFAULT_PREFERENCES.allergies);
+  const [selectedGoals, setSelectedGoals] = useState(DEFAULT_PREFERENCES.goals);
+  const [selectedDishes, setSelectedDishes] = useState(DEFAULT_PREFERENCES.dishTypes);
+
+  useEffect(() => {
+    const loadPreferences = async () => {
+      const preferences = await getRecipePreferences();
+      setSelectedTime(preferences.time);
+      setSelectedDiets(preferences.diets);
+      setSelectedAllergies(preferences.allergies);
+      setSelectedGoals(preferences.goals);
+      setSelectedDishes(preferences.dishTypes);
+    };
+
+    loadPreferences();
+  }, []);
 
   // Helper function to toggle a selection in an array
   const toggleSelection = (item, selectedArray, setFunction) => {
@@ -53,7 +67,7 @@ export default function PreferencesModal() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
+      
         
         {/* MODAL HEADER */}
         <View style={styles.header}>
@@ -84,12 +98,24 @@ export default function PreferencesModal() {
             <Text style={styles.clearText}>Clear All</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.applyButton} onPress={() => router.back()}>
+          <TouchableOpacity
+            style={styles.applyButton}
+            onPress={async () => {
+              await saveRecipePreferences({
+                time: selectedTime,
+                diets: selectedDiets,
+                allergies: selectedAllergies,
+                goals: selectedGoals,
+                dishTypes: selectedDishes,
+              });
+              router.back();
+            }}
+          >
             <Text style={styles.applyText}>Apply Filter</Text>
           </TouchableOpacity>
         </View>
 
-      </View>
+      
     </SafeAreaView>
   );
 }
