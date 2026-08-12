@@ -1,0 +1,25 @@
+{
+  "expo": {
+    "name": "RecipeAI",
+    "slug": "recipeai",
+    "version": "1.0.0",
+    "icon": "./assets/recipeai.png",
+    "splash": {
+      "image": "./assets/recipeai.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#F9F6F0"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "673c3853-c59c-4b31-bc22-686043d60f0a"
+      }
+    },
+    "android": {
+      "package": "com.buildora.hackathon.recipeai",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/recipeai.png",
+        "backgroundColor": "#F9F6F0"
+      }
+    }
+  }
+}
