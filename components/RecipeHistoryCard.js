@@ -1,11 +1,22 @@
 // components/RecipeHistoryCard.js
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../utils/theme';
 
-export default function RecipeHistoryCard({ title, time, ingredientCount, date, onPress }) {
+export default function RecipeHistoryCard({ title, time, ingredientCount, date, onPress, onSelectPress, selected }) {
   return (
-    <TouchableOpacity style={styles.card} onPress={onPress}>
+    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={onPress ? 0.8 : 1}>
+      {onSelectPress ? (
+        <TouchableOpacity style={styles.checkboxButton} onPress={onSelectPress}>
+          <Ionicons
+            name={selected ? 'checkmark-circle' : 'ellipse-outline'}
+            size={22}
+            color={selected ? theme.colors.primary : theme.colors.textMuted}
+          />
+        </TouchableOpacity>
+      ) : null}
+
       {/* Fake Image Placeholder - in a real app, this would be an <Image> */}
       <View style={styles.imageCircle}>
         <Text style={{ fontSize: 24 }}>🍲</Text>

@@ -22,7 +22,7 @@ export default function TabLayout() {
           paddingTop: 8,
         },
       }}>
-      
+
       {/* 1. Home Tab */}
       <Tabs.Screen
         name="index"
@@ -34,6 +34,16 @@ export default function TabLayout() {
         }}
       />
 
+
+      <Tabs.Screen
+        name="recipes"
+        options={{
+          title: 'Recipes',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="restaurant-outline" size={size || 24} color={color} />
+          ),
+        }}
+      />
       {/* 2. Saved Recipes Tab */}
       <Tabs.Screen
         name="saved"
@@ -45,16 +55,6 @@ export default function TabLayout() {
         }}
       />
 
-      {/* 3. Blog / Community Tab */}
-      <Tabs.Screen
-        name="blog"
-        options={{
-          title: 'Blog',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="document-text" size={size} color={color} />
-          ),
-        }}
-      />
 
       {/* 4. Account / Profile Tab */}
       <Tabs.Screen

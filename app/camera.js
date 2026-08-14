@@ -1,6 +1,6 @@
 // app/camera.js
 import React, { useRef, useState } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, ActivityIndicator, Alert, Platform } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, ActivityIndicator, Alert, Platform, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useRouter } from 'expo-router';
@@ -15,6 +15,9 @@ export default function CameraScreen() {
   const cameraRef = useRef(null);
   const router = useRouter();
   const [isProcessing, setIsProcessing] = useState(false);
+  
+  // NEW: State to hold the captured image so we can freeze the screen
+  const [capturedImage, setCapturedImage] = useState(null);
 
   if (!permission) return <View style={styles.container} />; 
 
@@ -44,9 +47,34 @@ export default function CameraScreen() {
           throw new Error('Camera scanning in a browser needs http://localhost or an HTTPS address. Do not use a local network IP address.');
         }
 
-        // 1. Take picture with base64
+        // 1. Take picture
         const photo = await cameraRef.current.takePictureAsync({ base64: true, quality: 0.5 });
-        const base64Image = photo?.base64 || photo?.uri?.replace(/^data:image\/[^;]+;base64,/, '');
+        
+        // FREEZE THE SCREEN: Immediately show the captured photo to the user
+        if (photo?.uri) {
+          setCapturedImage(photo.uri);
+        }
+
+        let base64Image = photo?.base64;
+
+        // 2. Cross-platform handling for Web Blob URIs vs Mobile Data URIs
+        if (!base64Image && photo?.uri) {
+          if (photo.uri.startsWith('data:image')) {
+            base64Image = photo.uri.replace(/^data:image\/[^;]+;base64,/, '');
+          } else if (photo.uri.startsWith('blob:')) {
+            const response = await fetch(photo.uri);
+            const blob = await response.blob();
+            base64Image = await new Promise((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onloadend = () => {
+                const result = reader.result;
+                resolve(result.replace(/^data:image\/[^;]+;base64,/, ''));
+              };
+              reader.onerror = reject;
+              reader.readAsDataURL(blob);
+            });
+          }
+        }
 
         if (!photo || !base64Image) {
           throw new Error("Camera failed to capture image data.");
@@ -54,12 +82,22 @@ export default function CameraScreen() {
 
         console.log("Photo captured successfully. Sending to Gemini...");
         
-        // 2. Send to Gemini service
+        // 3. Send to Gemini service
         const preferences = await getRecipePreferences();
         const generatedRecipe = await generateRecipeFromImage(base64Image, preferences);
+        
+        if (!generatedRecipe) {
+          setIsProcessing(false);
+          setCapturedImage(null); // Unfreeze if it fails
+          Alert.alert('Generation Failed', 'AI chef could not create a recipe from this image. Check your console logs.');
+          return;
+        }
+
         await addRecipeToHistory(generatedRecipe.recipes[0]);
 
         setIsProcessing(false);
+        setCapturedImage(null); // Clear the image for the next time they open the camera
+        
         router.push({
           pathname: '/recipe',
           params: { recipeData: JSON.stringify(generatedRecipe) }
@@ -68,7 +106,7 @@ export default function CameraScreen() {
       } catch (error) {
         console.error("Camera AI Error:", error);
         setIsProcessing(false);
-        // Display the EXACT error message in the alert box
+        setCapturedImage(null); // Unfreeze camera so they can try again
         Alert.alert("AI Error", error.message || "Failed to identify ingredients.");
       }
     }
@@ -76,33 +114,50 @@ export default function CameraScreen() {
 
   return (
     <View style={styles.container}>
-      <CameraView style={styles.camera} facing="back" ref={cameraRef}>
-        <SafeAreaView edges={['top']} style={styles.topBar}>
-          <TouchableOpacity style={styles.closeButton} onPress={() => router.back()}>
-            <Ionicons name="close" size={28} color="#FFFFFF" />
-          </TouchableOpacity>
-        </SafeAreaView>
+      {/* NEW: If we have a captured image, show it. Otherwise, show the live camera feed */}
+      {capturedImage ? (
+        <Image source={{ uri: capturedImage }} style={styles.camera} resizeMode="cover" />
+      ) : (
+        <CameraView style={styles.camera} facing="back" ref={cameraRef} />
+      )}
 
-        <SafeAreaView edges={['bottom']} style={styles.bottomBar}>
-          {isProcessing ? (
-            <View style={styles.processingContainer}>
-              <ActivityIndicator size="large" color={theme.colors.accent} />
-              <Text style={styles.processingText}>Chef Gemini is thinking...</Text>
-            </View>
-          ) : (
-            <TouchableOpacity style={styles.captureButton} onPress={takePicture}>
-              <View style={styles.captureInnerCircle} />
-            </TouchableOpacity>
-          )}
-        </SafeAreaView>
-      </CameraView>
+      <SafeAreaView edges={['top']} style={styles.topBar}>
+        <TouchableOpacity
+          style={styles.closeButton}
+          onPress={() => {
+            // Prevent backing out while processing, or clear the image if needed
+            if (isProcessing) return; 
+            
+            if (Platform.OS === 'web' && typeof window !== 'undefined' && window.history.length <= 1) {
+              router.replace('/');
+            } else {
+              router.back();
+            }
+          }}
+        >
+          <Ionicons name="close" size={28} color="#FFFFFF" />
+        </TouchableOpacity>
+      </SafeAreaView>
+
+      <SafeAreaView edges={['bottom']} style={styles.bottomBar}>
+        {isProcessing ? (
+          <View style={styles.processingContainer}>
+            <ActivityIndicator size="large" color={theme.colors.accent} />
+            <Text style={styles.processingText}>Ai Chef is thinking...</Text>
+          </View>
+        ) : (
+          <TouchableOpacity style={styles.captureButton} onPress={takePicture}>
+            <View style={styles.captureInnerCircle} />
+          </TouchableOpacity>
+        )}
+      </SafeAreaView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#000' },
-  camera: { flex: 1 },
+  camera: { flex: 1, width: '100%', height: '100%' },
   permissionContainer: { flex: 1, backgroundColor: theme.colors.background, justifyContent: 'center', alignItems: 'center', padding: 30 },
   iconCircle: { width: 80, height: 80, borderRadius: 40, backgroundColor: theme.colors.cardPrimary, justifyContent: 'center', alignItems: 'center', marginBottom: 20 },
   permissionTitle: { fontSize: 24, fontWeight: 'bold', color: theme.colors.textDark, marginBottom: 10 },

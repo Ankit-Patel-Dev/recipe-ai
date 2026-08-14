@@ -67,29 +67,25 @@ export default function PreferencesModal() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      
-        
-        {/* MODAL HEADER */}
+      <View style={styles.container}>
         <View style={styles.header}>
-          <View style={{ width: 24 }} /> {/* Spacer for centering */}
+          <View style={styles.headerSpacer} />
           <Text style={styles.headerTitle}>Recipe Preferences</Text>
           <TouchableOpacity onPress={() => router.back()}>
             <Ionicons name="close" size={24} color={theme.colors.textMuted} />
           </TouchableOpacity>
         </View>
 
-        {/* SCROLLABLE FILTER CONTENT */}
         <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
           {renderSection('Time', FILTER_DATA.time, selectedTime, setSelectedTime)}
           {renderSection('Do you follow any of the following diets?', FILTER_DATA.diets, selectedDiets, setSelectedDiets)}
           {renderSection('Any ingredients allergies or intolerance?', FILTER_DATA.allergies, selectedAllergies, setSelectedAllergies)}
           {renderSection('What is your goal?', FILTER_DATA.goals, selectedGoals, setSelectedGoals)}
           {renderSection('Dish Type', FILTER_DATA.dishTypes, selectedDishes, setSelectedDishes)}
-          
-          <View style={{ height: 100 }} /> {/* Bottom padding so scroll doesn't hide behind buttons */}
+
+          <View style={styles.bottomSpacer} />
         </ScrollView>
 
-        {/* BOTTOM ACTION BAR */}
         <View style={styles.footer}>
           <TouchableOpacity style={styles.clearButton} onPress={() => {
             setSelectedTime([]); setSelectedDiets([]); setSelectedAllergies([]); setSelectedGoals([]); setSelectedDishes([]);
@@ -114,8 +110,7 @@ export default function PreferencesModal() {
             <Text style={styles.applyText}>Apply Filter</Text>
           </TouchableOpacity>
         </View>
-
-      
+      </View>
     </SafeAreaView>
   );
 }
@@ -125,9 +120,11 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#FFFFFF' },
   
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 15, borderBottomWidth: 1, borderBottomColor: theme.colors.border },
+  headerSpacer: { width: 24 },
   headerTitle: { fontSize: 18, fontWeight: 'bold', color: theme.colors.textDark },
   
   scrollView: { flex: 1, paddingHorizontal: 20, paddingTop: 10 },
+  bottomSpacer: { height: 100 },
   
   sectionContainer: { marginTop: 20 },
   sectionTitle: { fontSize: 16, fontWeight: 'bold', color: theme.colors.textDark, marginBottom: 12 },

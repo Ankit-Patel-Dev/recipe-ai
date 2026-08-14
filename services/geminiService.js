@@ -1,5 +1,6 @@
-const GEMINI_API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY;
-const GEMINI_MODEL = 'gemini-3.5-flash';
+import { getGeminiKey, getGeminiModel } from '../utils/profileContext';
+
+const DEFAULT_GEMINI_MODEL = 'gemini-3.6-flash'; 
 
 const extractJSON = (rawText) => {
   try {
@@ -47,29 +48,47 @@ const normaliseRecipes = (result) => {
   return { recipes: validRecipes };
 };
 
-const requestRecipes = async (promptText, imageBase64) => {
-  if (!GEMINI_API_KEY) throw new Error('Missing Gemini API key. Add EXPO_PUBLIC_GEMINI_API_KEY to your .env file.');
+const requestRecipes = async (promptText, imageBase64, signal) => {
+  // 👈 Fetch Key Dynamically: ONLY try Secure Store. No .env allowed.
+  const activeApiKey = await getGeminiKey();
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
+  // Read model selection (non-secret) and fall back to default
+  const selectedModel = (await getGeminiModel()) || DEFAULT_GEMINI_MODEL;
+
+  // 👈 Strict Check: If no key is found, throw an error instructing the user
+  if (!activeApiKey) {
+    throw new Error('Missing API key. Please enter your Gemini API Key in the Profile tab.');
+  }
+
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${activeApiKey}`;
   const parts = [{ text: promptText }];
   if (imageBase64) {
     parts.push({ inline_data: { mime_type: 'image/jpeg', data: imageBase64 } });
   }
 
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ contents: [{ parts }] }),
-  });
-  const result = await response.json();
-  if (!response.ok) throw new Error(result.error?.message || 'Gemini API failed');
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ contents: [{ parts }] }),
+      signal,
+    });
 
-  const rawResponse = result.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!rawResponse) throw new Error('Gemini returned no recipe. Please try again.');
-  return normaliseRecipes(extractJSON(rawResponse));
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error?.message || 'Gemini API failed');
+
+    const rawResponse = result.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!rawResponse) throw new Error('Gemini returned no recipe. Please try again.');
+    return normaliseRecipes(extractJSON(rawResponse));
+  } catch (error) {
+    // If the request was aborted, return null so callers can handle cancellation quietly
+    if (error.name === 'AbortError') return null;
+    // Re-throw other errors for higher level handling/logging
+    throw error;
+  }
 };
 
-export const generateRecipeFromText = async (ingredients, preferences) => {
+export const generateRecipeFromText = async (ingredients, preferences, signal) => {
   const isLimitedInput = ingredients.length < 3;
   const promptText = `
 You are a precise professional chef. The user has these ingredients: ${ingredients.join(', ')}.
@@ -81,10 +100,16 @@ Respect these filters exactly:\n${preferenceInstructions(preferences)}
 Return ONLY valid JSON, with no markdown, using this structure. Return no more than five recipes:
 ${recipeSchema}`;
 
-  return requestRecipes(promptText);
+  try {
+    return await requestRecipes(promptText, null, signal);
+  } catch (error) {
+    if (error?.name === 'AbortError') return null;
+    console.error('Error generating recipe from text:', error);
+    return null;
+  }
 };
 
-export const generateRecipeFromImage = async (base64Image, preferences) => {
+export const generateRecipeFromImage = async (base64Image, preferences, signal) => {
   const promptText = `
 You are a precise professional chef. Inspect the image and identify only ingredients you can reasonably see. Create 1 to 5 genuinely different, practical recipe options based on those ingredients.
 
@@ -94,5 +119,25 @@ Respect these filters exactly:\n${preferenceInstructions(preferences)}
 Return ONLY valid JSON, with no markdown, using this structure. Return no more than five recipes:
 ${recipeSchema}`;
 
-  return requestRecipes(promptText, base64Image);
+  try {
+    return await requestRecipes(promptText, base64Image, signal);
+  } catch (error) {
+    if (error?.name === 'AbortError') return null;
+    console.error('Error generating recipe from image:', error);
+    return null;
+  }
+};
+
+export const generateRecipeByName = async (recipeName, signal) => {
+  try {
+    const prompt = `You are a precise professional chef. Please provide a detailed recipe for "${recipeName}".
+
+Return ONLY valid JSON, with no markdown or extra commentary. Use this structure exactly:
+${recipeSchema}`;
+
+    return await requestRecipes(prompt, null, signal);
+  } catch (error) {
+    console.error("Network or fetch error generating recipe by name:", error);
+    return null;
+  }
 };

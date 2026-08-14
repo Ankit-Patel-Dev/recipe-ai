@@ -30,7 +30,7 @@ Follow these steps to run the project on your local machine:
 
 ### 1. Clone the Repository
 ```bash
-git clone [https://github.com/Sinister343536/recipe-ai.git](https://github.com/Sinister343536/recipe-ai.git)
+git clone [https://github.com/Ankit-Patel-Dev/recipe-ai.git](https://github.com/Ankit-Patel-Dev/recipe-ai.git)
 cd RecipeAI 
 
 2. Install Dependencies

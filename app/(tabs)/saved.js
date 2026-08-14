@@ -18,7 +18,7 @@ export default function SavedScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-        <Text style={styles.headerTitle}>Saved Recipes</Text>
+        <Text style={styles.headerTitle}>Saved Generated Recipes</Text>
         <Text style={styles.subtitle}>Your favorite AI-generated creations</Text>
 
         {savedRecipes.map((item) => (

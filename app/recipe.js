@@ -59,7 +59,7 @@ export default function RecipeScreen() {
           </TouchableOpacity>
           <View style={styles.headerRight}>
             <TouchableOpacity onPress={handleSave} style={[styles.iconButton, { backgroundColor: theme.colors.accent, marginRight: 10 }]}>
-              <Ionicons name={isSaved ? 'heart' : 'heart-outline'} size={20} color={theme.colors.textDark} />
+              <Ionicons name={isSaved ? 'bookmark' : 'bookmark-outline'} size={20} color={theme.colors.textDark} />
             </TouchableOpacity>
             <TouchableOpacity onPress={handleShare} style={styles.iconButton}>
               <Ionicons name="share-outline" size={20} color={theme.colors.textDark} />

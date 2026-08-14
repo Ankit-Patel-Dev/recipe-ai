@@ -31,3 +31,10 @@ export const addRecipeToHistory = async (recipe) => {
 
   return updatedHistory;
 };
+
+export const removeRecipeHistoryItems = async (ids = []) => {
+  const existingHistory = await getRecipeHistory();
+  const updatedHistory = existingHistory.filter((item) => !ids.includes(item.id));
+  await AsyncStorage.setItem(HISTORY_KEY, JSON.stringify(updatedHistory));
+  return updatedHistory;
+};

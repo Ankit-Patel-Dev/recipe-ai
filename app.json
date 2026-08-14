@@ -1,8 +1,11 @@
 {
   "expo": {
+    "name": "RecipeAi",
+    "slug": "recipeai",
+    "version": "1.1.0",
     "icon": "./assets/recipeai.png",
     "splash": {
-      "image": "./assets/recipeai.png",
+      "image": "./assets/recipeai_splash.png",
       "resizeMode": "contain",
       "backgroundColor": "#F9F6F0"
     },
@@ -12,11 +15,17 @@
       }
     },
     "android": {
-      "package": "com.buildora.hackathon.recipeai"
+      "package": "com.buildora.hackathon.recipeai",
       "adaptiveIcon": {
         "foregroundImage": "./assets/recipeai.png",
         "backgroundColor": "#F9F6F0"
       }
+    },
+    "plugins": [
+      "expo-secure-store"
+    ],
+    "ios": {
+      "bundleIdentifier": "com.buildora.hackathon.recipeai"
     }
   }
 }
