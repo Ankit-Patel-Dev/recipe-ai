@@ -1,44 +1,31 @@
 {
   "expo": {
-    "name": "MyApp",
-    "slug": "MyApp",
-    "version": "1.0.0",
-    "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
-    "scheme": "myapp",
-    "userInterfaceStyle": "automatic",
-    "ios": {
-      "icon": "./assets/expo.icon"
+    "name": "RecipeAi",
+    "slug": "recipeai",
+    "version": "1.1.0",
+    "icon": "./assets/recipeai.png",
+    "splash": {
+      "image": "./assets/recipeai_splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#F9F6F0"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "673c3853-c59c-4b31-bc22-686043d60f0a"
+      }
     },
     "android": {
+      "package": "com.buildora.hackathon.recipeai",
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
-      },
-      "predictiveBackGestureEnabled": false
-    },
-    "web": {
-      "output": "static",
-      "favicon": "./assets/images/favicon.png"
+        "foregroundImage": "./assets/recipeai.png",
+        "backgroundColor": "#F9F6F0"
+      }
     },
     "plugins": [
-      "expo-router",
-      [
-        "expo-splash-screen",
-        {
-          "backgroundColor": "#208AEF",
-          "android": {
-            "image": "./assets/images/splash-icon.png",
-            "imageWidth": 76
-          }
-        }
-      ]
+      "expo-secure-store"
     ],
-    "experiments": {
-      "typedRoutes": true,
-      "reactCompiler": true
+    "ios": {
+      "bundleIdentifier": "com.buildora.hackathon.recipeai"
     }
   }
 }
