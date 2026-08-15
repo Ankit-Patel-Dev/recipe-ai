@@ -2,7 +2,7 @@
   "expo": {
     "name": "RecipeAi",
     "slug": "recipeai",
-    "version": "1.1.0",
+    "version": "2.1.0",
     "icon": "./assets/recipeai.png",
     "splash": {
       "image": "./assets/recipeai_splash.png",
