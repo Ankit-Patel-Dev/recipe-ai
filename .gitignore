@@ -44,3 +44,4 @@ app-example
 .claude/
 .claude/
 .vscode/
+*.apk

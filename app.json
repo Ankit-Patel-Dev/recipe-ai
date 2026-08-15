@@ -9,6 +9,10 @@
       "resizeMode": "contain",
       "backgroundColor": "#F9F6F0"
     },
+    "web": {
+      "output": "single",
+      "favicon": "./assets/recipeai.png"
+    },
     "extra": {
       "eas": {
         "projectId": "673c3853-c59c-4b31-bc22-686043d60f0a"
