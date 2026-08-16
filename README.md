@@ -1,6 +1,4 @@
-Here is the **complete `README.md` in one single copy-paste box**, with the heading included and your **live Vercel deployment link** added:
 
-````markdown
 # 🍳 RecipeAI — Smart AI-Powered Recipe Generator
 
 > 🏆 **Hackathon Winning Project**
