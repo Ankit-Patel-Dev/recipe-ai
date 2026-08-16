@@ -357,6 +357,10 @@ Go to:
 [https://aistudio.google.com/](https://aistudio.google.com/)
 
 Sign in and create an API key.
+and for check you api model 
+[https://ai.google.dev/gemini-api/docs/api-key#javascript/](https://ai.google.dev/gemini-api/docs/api-key#javascript/) 
+in the code you will get api model
+e.g. gemini-3.6-flash
 
 ## 2. Start RecipeAI
 
