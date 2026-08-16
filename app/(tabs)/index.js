@@ -229,7 +229,7 @@ export default function HomeScreen() {
         <View style={styles.ingredientCard}>
           <View style={styles.cardHeaderRow}>
             <Ionicons name="sparkles" size={16} color={theme.colors.textMuted} style={{ marginRight: 6 }} />
-            <Text style={styles.cardSubtitle}>We'll conjure a recipe from your ingredients</Text>
+            <Text style={styles.cardSubtitle}>We'll conjure a recipe from your added ingredients or you can add the name of the recipe</Text>
           </View>
 
           {ingredients.length > 0 && (
@@ -248,7 +248,7 @@ export default function HomeScreen() {
             <TextInput
               ref={inputRef}
               style={styles.addInput}
-              placeholder="Type ingredient and Add"
+              placeholder="Type ingredients or recipe "
               placeholderTextColor="#999999"
               value={inputText}
               onChangeText={setInputText}
