@@ -17,7 +17,7 @@ export default function RecipeScreen() {
       return { recipes: [mockRecipeResponse] };
     }
   }, [params.recipeData]);
-  const recipes = (Array.isArray(response.recipes) ? response.recipes : [response]).slice(0, 5);
+  const recipes = (Array.isArray(response.recipes) ? response.recipes : [response]).slice(0, 2);
   const [selectedRecipeIndex, setSelectedRecipeIndex] = useState(0);
   const [activeTab, setActiveTab] = useState('Recipes');
   const [isSaved, setIsSaved] = useState(false);

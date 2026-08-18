@@ -11,12 +11,19 @@ import { getLikedRecipes, toggleLikedRecipe } from '../../utils/likedRecipes';
 
 export default function RecipesScreen() {
     const [recipes, setRecipes] = useState([]);
+    const [visibleRecipes, setVisibleRecipes] = useState([]);
     const [likedRecipeIds, setLikedRecipeIds] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [refreshing, setRefreshing] = useState(false); 
+    const [refreshing, setRefreshing] = useState(false);
+    const [loadingMore, setLoadingMore] = useState(false);
+    const [showRefreshButton, setShowRefreshButton] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [isGeneratingAI, setIsGeneratingAI] = useState(false);
+    const [autoLoadsUsed, setAutoLoadsUsed] = useState(0);
     const abortControllerRef = useRef(null);
+
+    const INITIAL_PAGE_SIZE = 10;
+    const MAX_AUTO_LOADS = 5;
     
     // 🌟 Filter & Modal States
     const [filterModalVisible, setFilterModalVisible] = useState(false);
@@ -32,19 +39,31 @@ export default function RecipesScreen() {
     const categoriesList = ['Vegetarian', 'Chicken', 'Seafood', 'Pasta', 'Dessert', 'Breakfast', 'Beef', 'Miscellaneous'];
     const countriesList = ['Italian', 'Mexican', 'Chinese', 'Japanese', 'Thai'];
 
+    const applyRecipeSet = useCallback((items, label) => {
+        const safeItems = Array.isArray(items) ? items : [];
+        setRecipes(safeItems);
+        setVisibleRecipes(safeItems.slice(0, Math.min(INITIAL_PAGE_SIZE, safeItems.length)));
+        setAutoLoadsUsed(0);
+        setShowRefreshButton(false);
+        setCurrentFilterLabel(label);
+    }, []);
+
     // 🌟 DEFAULT LOAD: "Popular Dishes"
     const fetchPopularDishes = async () => {
         const randomCategory = categoriesList[Math.floor(Math.random() * categoriesList.length)];
         const data = await getRecipesByCategory(randomCategory);
         
-        if (data) {
-            const shuffledRecipes = data.sort(() => 0.5 - Math.random());
-            setRecipes(shuffledRecipes);
-            setCurrentFilterLabel('Popular Dishes');
-            // Reset active filters when returning to default
+        if (data && data.length > 0) {
+            const shuffledRecipes = [...data].sort(() => 0.5 - Math.random());
+            applyRecipeSet(shuffledRecipes, 'Popular Dishes');
             setSelectedCategory(null);
             setSelectedCountry(null);
+            return;
         }
+
+        applyRecipeSet([], 'Popular Dishes');
+        setSelectedCategory(null);
+        setSelectedCountry(null);
     };
 
     const loadLiked = async () => {
@@ -83,9 +102,58 @@ export default function RecipesScreen() {
     const onRefresh = async () => {
         setRefreshing(true);
         setSearchQuery('');
-        await fetchPopularDishes(); // Dragging down always returns to Popular Dishes
+        setLoadingMore(false);
+        setShowRefreshButton(false);
+        setAutoLoadsUsed(0);
+
+        if (selectedCategory && selectedCountry) {
+            const [categoryData, countryData] = await Promise.all([
+                getRecipesByCategory(selectedCategory),
+                getRecipesByArea(selectedCountry)
+            ]);
+
+            if (categoryData && countryData) {
+                const countryIds = new Set(countryData.map(meal => meal.idMeal));
+                const combinedMatches = categoryData.filter(meal => countryIds.has(meal.idMeal));
+                applyRecipeSet(combinedMatches, `${selectedCountry} ${selectedCategory}`);
+            } else {
+                applyRecipeSet([], `${selectedCountry} ${selectedCategory}`);
+            }
+        } else if (selectedCategory) {
+            const data = await getRecipesByCategory(selectedCategory);
+            applyRecipeSet(data || [], `${selectedCategory} Dishes`);
+        } else if (selectedCountry) {
+            const data = await getRecipesByArea(selectedCountry);
+            applyRecipeSet(data || [], `${selectedCountry} Cuisine`);
+        } else {
+            await fetchPopularDishes();
+        }
+
         setRefreshing(false);
     };
+
+    const handleLoadMore = useCallback(() => {
+        if (loadingMore || showRefreshButton || recipes.length === 0 || visibleRecipes.length >= recipes.length) return;
+
+        setLoadingMore(true);
+
+        const nextBatch = recipes.slice(visibleRecipes.length, visibleRecipes.length + INITIAL_PAGE_SIZE);
+        if (!nextBatch.length) {
+            setLoadingMore(false);
+            return;
+        }
+
+        setVisibleRecipes((prev) => [...prev, ...nextBatch]);
+        setAutoLoadsUsed((prev) => {
+            const next = prev + 1;
+            if (next >= MAX_AUTO_LOADS) {
+                setShowRefreshButton(true);
+            }
+            return next;
+        });
+
+        setLoadingMore(false);
+    }, [loadingMore, showRefreshButton, recipes, visibleRecipes]);
 
     // SEARCH BAR
     const handleApiSearch = async () => {
@@ -93,8 +161,7 @@ export default function RecipesScreen() {
         setLoading(true);
         
         const results = await searchRecipesByName(searchQuery.trim());
-        setRecipes(results);
-        setCurrentFilterLabel(`Search: "${searchQuery}"`);
+        applyRecipeSet(results, `Search: "${searchQuery}"`);
         
         setSelectedCategory(null);
         setSelectedCountry(null);
@@ -108,35 +175,25 @@ export default function RecipesScreen() {
         setSearchQuery(''); 
 
         if (selectedCategory && selectedCountry) {
-            // If both are selected, we must fetch both and find the matches (intersection)
             const [categoryData, countryData] = await Promise.all([
                 getRecipesByCategory(selectedCategory),
                 getRecipesByArea(selectedCountry)
             ]);
 
             if (categoryData && countryData) {
-                // Find recipes that exist in BOTH lists
                 const countryIds = new Set(countryData.map(meal => meal.idMeal));
                 const combinedMatches = categoryData.filter(meal => countryIds.has(meal.idMeal));
-                
-                setRecipes(combinedMatches);
-                setCurrentFilterLabel(`${selectedCountry} ${selectedCategory}`);
+                applyRecipeSet(combinedMatches, `${selectedCountry} ${selectedCategory}`);
             } else {
-                setRecipes([]);
-                setCurrentFilterLabel(`${selectedCountry} ${selectedCategory}`);
+                applyRecipeSet([], `${selectedCountry} ${selectedCategory}`);
             }
         } else if (selectedCategory) {
-            // Only Category selected
             const data = await getRecipesByCategory(selectedCategory);
-            setRecipes(data || []);
-            setCurrentFilterLabel(`${selectedCategory} Dishes`);
+            applyRecipeSet(data || [], `${selectedCategory} Dishes`);
         } else if (selectedCountry) {
-            // Only Country selected
             const data = await getRecipesByArea(selectedCountry);
-            setRecipes(data || []);
-            setCurrentFilterLabel(`${selectedCountry} Cuisine`);
+            applyRecipeSet(data || [], `${selectedCountry} Cuisine`);
         } else {
-            // Neither selected
             await fetchPopularDishes();
         }
         
@@ -274,9 +331,9 @@ export default function RecipesScreen() {
                 </View>
 
                 {/* Recipe Grid */}
-                {recipes.length > 0 ? (
+                {visibleRecipes.length > 0 ? (
                     <FlatList
-                        data={recipes}
+                        data={visibleRecipes}
                         keyExtractor={(item) => item.idMeal}
                         renderItem={renderRecipeCard}
                         numColumns={2}
@@ -284,9 +341,30 @@ export default function RecipesScreen() {
                         showsVerticalScrollIndicator={false}
                         keyboardShouldPersistTaps="handled"
                         contentContainerStyle={styles.list}
+                        onEndReached={handleLoadMore}
+                        onEndReachedThreshold={0.4}
                         refreshControl={
                             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={["#ff6b6b"]} tintColor="#ff6b6b" />
                         }
+                        ListFooterComponent={() => {
+                            if (showRefreshButton) {
+                                return (
+                                    <TouchableOpacity style={styles.refreshFooterButton} onPress={onRefresh}>
+                                        <Text style={styles.refreshFooterText}>Refresh</Text>
+                                    </TouchableOpacity>
+                                );
+                            }
+
+                            if (loadingMore) {
+                                return (
+                                    <View style={styles.footerLoading}>
+                                        <ActivityIndicator size="small" color="#ff6b6b" />
+                                    </View>
+                                );
+                            }
+
+                            return null;
+                        }}
                     />
                 ) : (
                     <ScrollView 
@@ -438,6 +516,25 @@ const styles = StyleSheet.create({
     
     list: { paddingBottom: 20 },
     row: { justifyContent: 'space-between', paddingHorizontal: 15 },
+    footerLoading: {
+        paddingVertical: 18,
+        alignItems: 'center',
+    },
+    refreshFooterButton: {
+        alignSelf: 'center',
+        marginVertical: 18,
+        paddingVertical: 12,
+        paddingHorizontal: 22,
+        borderRadius: 18,
+        backgroundColor: '#fff1f2',
+        borderWidth: 1,
+        borderColor: '#fda4af',
+    },
+    refreshFooterText: {
+        color: '#e11d48',
+        fontWeight: '700',
+        fontSize: 14,
+    },
     card: {
         backgroundColor: '#fff',
         borderRadius: 15,

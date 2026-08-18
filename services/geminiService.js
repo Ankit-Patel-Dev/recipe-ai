@@ -254,6 +254,9 @@ const requestRecipes = async (
               parts,
             },
           ],
+          generationConfig: {
+            responseMimeType: 'application/json',
+          },
         }),
         signal,
       });
@@ -309,7 +312,7 @@ export const generateRecipeFromText =
     const promptText = `
 You are a precise professional chef. The user has these ingredients: ${ingredients.join(', ')}.
 
-Create 1 to 5 genuinely different, practical recipe options. Do not invent ingredients as if the user has them. Every recipe must list the user's supplied ingredients that it uses in detectedIngredients, with realistic amounts. Use as many supplied ingredients as reasonably possible.
+Create 1 to 2 genuinely different, practical recipe options. Do not invent ingredients as if the user has them. Every recipe must list the user's supplied ingredients that it uses in detectedIngredients, with realistic amounts. Use as many supplied ingredients as reasonably possible.
 
 ${
   isLimitedInput
@@ -322,7 +325,7 @@ ${preferenceInstructions(
   preferences
 )}
 
-Return ONLY valid JSON, with no markdown, using this structure. Return no more than five recipes:
+Return ONLY valid JSON, with no markdown, using this structure. Return no more than two recipes:
 
 ${recipeSchema}
 `;
@@ -357,7 +360,7 @@ export const generateRecipeFromImage =
     signal
   ) => {
     const promptText = `
-You are a precise professional chef. Inspect the image and identify only ingredients you can reasonably see. Create 1 to 5 genuinely different, practical recipe options based on those ingredients.
+You are a precise professional chef. Inspect the image and identify only ingredients you can reasonably see. Create 1 to 2 genuinely different, practical recipe options based on those ingredients.
 
 For every recipe, detectedIngredients must contain the visible ingredients it uses. Do not claim uncertain ingredients are visible.
 
@@ -370,7 +373,7 @@ ${preferenceInstructions(
   preferences
 )}
 
-Return ONLY valid JSON, with no markdown, using this structure. Return no more than five recipes:
+Return ONLY valid JSON, with no markdown, using this structure. Return no more than two recipes:
 
 ${recipeSchema}
 `;
@@ -408,8 +411,9 @@ export const generateRecipeByName =
 You are a precise professional chef.
 
 Please provide a detailed recipe for "${recipeName}".
+Keep the instructions concise, direct, and limited to a maximum of 5 to 6 clear steps to ensure fast generation.
 
-Return ONLY valid JSON, with no markdown or extra commentary.
+Return ONLY valid JSON, with no markdown or extra commentary. Ensure there is EXACTLY 1 recipe object in the "recipes" array.
 
 Use this structure exactly:
 

@@ -178,7 +178,7 @@ export default function HomeScreen() {
         return;
       }
 
-      await addRecipeToHistory(
+      const updatedHistory = await addRecipeToHistory(
         generatedRecipe
       );
       setHistory(updatedHistory);
@@ -385,13 +385,13 @@ export default function HomeScreen() {
 
         {/* HISTORY SECTION */}
         <View style={styles.historyHeader}>
-          <Text style={styles.historyTitle}>History</Text>
+          <Text style={styles.historyTitle}>Recently Generated Recipes</Text>
           <TouchableOpacity onPress={() => router.push('/history')}>
             <Text style={styles.seeAllText}>See All</Text>
           </TouchableOpacity>
         </View>
 
-        {history.map((item) => (
+        {history.slice(0, 5).map((item) => (
           <RecipeHistoryCard
             key={item.id}
             title={item.title}
@@ -548,7 +548,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   historyHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15 },
-  historyTitle: { fontSize: 20, fontWeight: 'bold', color: theme.colors.textDark },
+  historyTitle: { fontSize: 19, fontWeight: 'bold', color: theme.colors.textDark },
   seeAllText: { color: theme.colors.primary, fontWeight: 'bold', fontSize: 14 },
   emptyHistoryText: { color: theme.colors.textMuted, fontSize: 14, paddingVertical: 12 }
 });
